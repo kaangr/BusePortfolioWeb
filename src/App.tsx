@@ -31,10 +31,10 @@ const projects = [
     id: 1,
     title: 'Modern Minimalist Living Room',
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
+    image: '/images/living-room-main.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800',
-      'https://images.unsplash.com/photo-1600573472591-ee6981cf35b6?w=800'
+      '/images/living-room-1.png',
+      '/images/living-room-2.jpg'
     ],
     modelUrl: '/models/living-room.glb'
   },
@@ -42,10 +42,10 @@ const projects = [
     id: 2,
     title: 'Contemporary Kitchen Design',
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    image: 'https://images.unsplash.com/photo-1556911220-bff31c812dba?w=800',
+    image: '/images/kitchen-main.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=800',
-      'https://images.unsplash.com/photo-1556909190-eccf4a8bf97a?w=800'
+      '/images/kitchen-1.jpg',
+      '/images/kitchen-2.jpg'
     ],
     modelUrl: '/models/kitchen.glb'
   },
@@ -53,10 +53,10 @@ const projects = [
     id: 3,
     title: 'Luxurious Master Bedroom',
     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800',
+    image: '/images/bedroom-main.jpg',
     gallery: [
-      'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800',
-      'https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800'
+      '/images/bedroom-1.jpg',
+      '/images/bedroom-2.jpg'
     ],
     modelUrl: '/models/bedroom.glb'
   }
@@ -118,8 +118,8 @@ function App() {
           className="text-center max-w-4xl mx-auto space-y-8 relative pb-48"
         >
           <img
-            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
-            alt="Profile"
+            src="/images/profile.png"
+            alt="Buse Arıca"
             className="w-48 h-48 rounded-full object-cover border-4 border-white/20 mx-auto shadow-lg hover:scale-105 transition-transform duration-300"
           />
           <div>
