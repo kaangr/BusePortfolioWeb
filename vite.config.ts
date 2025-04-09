@@ -16,9 +16,19 @@ export default defineConfig({
         },
       },
     },
+    modulePreload: {
+      polyfill: true
+    }
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'framer-motion', '@react-three/fiber', '@react-three/drei'],
     exclude: ['lucide-react'],
   },
+  server: {
+    headers: {
+      'Cache-Control': 'no-store',
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp'
+    }
+  }
 });
