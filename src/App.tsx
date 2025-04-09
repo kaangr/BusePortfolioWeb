@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Mail, Phone, MapPin, Linkedin, Palette, Camera, Cuboid as Cube, Languages } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Mail, MapPin, Linkedin, Palette, Camera, Cuboid as Cube, Languages } from 'lucide-react';
 import { ModelViewer } from './components/ModelViewer';
 import { ProjectCard } from './components/ProjectCard';
 import { Background } from './components/Background';
@@ -7,16 +7,16 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 
 const content = {
   en: {
-    about: "I'm currently pursuing my Bachelor's degree in Interior Design at Beykent University. My passion for creating beautiful, functional spaces drives me to constantly explore new design possibilities and push creative boundaries. As a third-year interior design student, I've developed proficiency in various industry-standard tools and technologies, allowing me to bring my creative visions to life through both traditional and digital mediums.",
-    title: "Interior Designer & 3D Artist",
+    about: "I'm currently pursuing my Bachelor's degree in Interior Design at Beykent University. With a passion for creating harmonious and functional spaces, I combine innovative design principles with practical solutions. My expertise in various design software allows me to bring creative visions to life, while my attention to detail ensures each project meets the highest standards of aesthetic and functionality.",
+    title: "Interior Designer",
     aboutTitle: "About Me",
     skills: "Technical Skills",
     projects: "Featured Projects",
     viewProjects: "View My Projects"
   },
   tr: {
-    about: "Beykent Üniversitesi'nde İç Mimarlık lisans eğitimimi sürdürüyorum. Güzel ve işlevsel mekanlar yaratma tutkum, beni sürekli olarak yeni tasarım olanaklarını keşfetmeye ve yaratıcı sınırları zorlamaya itiyor. Üçüncü sınıf iç mimarlık öğrencisi olarak, endüstri standardı araçlar ve teknolojilerde yetkinlik kazandım, bu da yaratıcı vizyonlarımı hem geleneksel hem de dijital ortamlarda hayata geçirmemi sağlıyor.",
-    title: "İç Mimar & 3D Sanatçı",
+    about: "Beykent Üniversitesi'nde İç Mimarlık lisans eğitimimi sürdürüyorum. Uyumlu ve işlevsel mekanlar yaratma tutkusuyla, yenilikçi tasarım prensiplerini pratik çözümlerle birleştiriyorum. Çeşitli tasarım yazılımlarındaki uzmanlığım, yaratıcı vizyonları hayata geçirmemi sağlarken, detaylara olan dikkatim her projenin estetik ve işlevsellik açısından en yüksek standartlara ulaşmasını sağlıyor.",
+    title: "İç Mimar",
     aboutTitle: "Hakkımda",
     skills: "Teknik Beceriler",
     projects: "Öne Çıkan Projeler",
@@ -66,23 +66,96 @@ const skills = [
   { icon: Cube, name: 'SketchUp' }
 ];
 
+interface CursorParticle {
+  id: number;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  opacity: number;
+}
+
 function App() {
   const [selectedProject, setSelectedProject] = useState(projects[0]);
   const [language, setLanguage] = useState<'en' | 'tr'>('en');
   const [isInteracting, setIsInteracting] = useState(false);
+  const [cursorParticles, setCursorParticles] = useState<CursorParticle[]>([]);
   const projectsRef = useRef<HTMLDivElement>(null);
+  const particleTimeout = useRef<NodeJS.Timeout[]>([]);
 
-  const scrollToProjects = () => {
-    projectsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // Clear particle timeouts on unmount
+  useEffect(() => {
+    return () => {
+      particleTimeout.current.forEach(timeout => clearTimeout(timeout));
+    };
+  }, []);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const shapes = ['triangle', 'circle', 'square'];
+    const newParticles: CursorParticle[] = Array.from({ length: 3 }).map((_, i) => ({
+      id: Date.now() + i,
+      x: e.clientX,
+      y: e.clientY,
+      rotation: Math.random() * 360,
+      scale: Math.random() * 0.5 + 0.5,
+      opacity: 0.8,
+    }));
+
+    setCursorParticles(prev => [...prev, ...newParticles]);
+
+    // Remove particles after animation
+    const timeout = setTimeout(() => {
+      setCursorParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+    }, 1000);
+
+    particleTimeout.current.push(timeout);
   };
 
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const headerScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
+  const scrollToProjects = () => {
+    projectsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900/50 to-black/50 text-white relative">
-      <Background isInteracting={isInteracting} />
+    <div 
+      className="min-h-screen bg-gradient-to-br from-gray-900/50 to-black/50 text-white relative overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
+      {/* Cursor particles */}
+      {cursorParticles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="fixed pointer-events-none z-50 mix-blend-plus-lighter"
+          initial={{ 
+            x: particle.x, 
+            y: particle.y,
+            rotate: particle.rotation,
+            scale: particle.scale,
+            opacity: particle.opacity 
+          }}
+          animate={{ 
+            x: particle.x + (Math.random() * 100 - 50),
+            y: particle.y + (Math.random() * 100 - 50),
+            rotate: particle.rotation + 180,
+            scale: 0,
+            opacity: 0
+          }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <div className="w-3 h-3 bg-white/30 backdrop-blur-sm" style={{
+            clipPath: Math.random() > 0.5 
+              ? 'polygon(50% 0%, 0% 100%, 100% 100%)'  // triangle
+              : Math.random() > 0.5 
+                ? 'circle(50% at 50% 50%)'  // circle
+                : 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'  // square
+          }} />
+        </motion.div>
+      ))}
+
+      <Background isInteracting={isInteracting} scrollProgress={scrollYProgress.get()} />
       
       {/* Hero Section */}
       <motion.div 
@@ -107,10 +180,10 @@ function App() {
           <img
             src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
             alt="Profile"
-            className="w-32 h-32 rounded-full object-cover border-4 border-white/20 mx-auto"
+            className="w-48 h-48 rounded-full object-cover border-4 border-white/20 mx-auto shadow-lg hover:scale-105 transition-transform duration-300"
           />
           <div>
-            <h1 className="text-5xl font-bold mb-4">Sarah Anderson</h1>
+            <h1 className="text-5xl font-bold mb-4">Buse Arıca</h1>
             <p className="text-2xl text-gray-300 mb-8">{content[language].title}</p>
             <p className="text-lg text-gray-300 max-w-2xl mx-auto mb-12">{content[language].about}</p>
           </div>
@@ -137,10 +210,6 @@ function App() {
             <a href="mailto:buse.arıca@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
               <Mail className="w-5 h-5" />
               buse.arıca@gmail.com
-            </a>
-            <a href="tel:+1234567890" className="flex items-center gap-2 hover:text-white transition-colors">
-              <Phone className="w-5 h-5" />
-              +1 (234) 567-890
             </a>
             <div className="flex items-center gap-2">
               <MapPin className="w-5 h-5" />
