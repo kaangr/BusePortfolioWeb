@@ -3,6 +3,8 @@ import { Mail, MapPin, Linkedin, Palette, Camera, Cuboid as Cube, Languages } fr
 import { ModelViewer } from './components/ModelViewer';
 import { ProjectCard } from './components/ProjectCard';
 import { Background } from './components/Background';
+import { RulerCursor } from './components/DesignerCursor';
+import { PendantLamp } from './components/PendantLamp';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 const content = {
@@ -79,37 +81,7 @@ function App() {
   const [selectedProject, setSelectedProject] = useState(projects[0]);
   const [language, setLanguage] = useState<'en' | 'tr'>('en');
   const [isInteracting, setIsInteracting] = useState(false);
-  const [cursorParticles, setCursorParticles] = useState<CursorParticle[]>([]);
   const projectsRef = useRef<HTMLDivElement>(null);
-  const particleTimeout = useRef<NodeJS.Timeout[]>([]);
-
-  // Clear particle timeouts on unmount
-  useEffect(() => {
-    return () => {
-      particleTimeout.current.forEach(timeout => clearTimeout(timeout));
-    };
-  }, []);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const shapes = ['triangle', 'circle', 'square'];
-    const newParticles: CursorParticle[] = Array.from({ length: 3 }).map((_, i) => ({
-      id: Date.now() + i,
-      x: e.clientX,
-      y: e.clientY,
-      rotation: Math.random() * 360,
-      scale: Math.random() * 0.5 + 0.5,
-      opacity: 0.8,
-    }));
-
-    setCursorParticles(prev => [...prev, ...newParticles]);
-
-    // Remove particles after animation
-    const timeout = setTimeout(() => {
-      setCursorParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
-    }, 1000);
-
-    particleTimeout.current.push(timeout);
-  };
 
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
@@ -120,41 +92,9 @@ function App() {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-gradient-to-br from-gray-900/50 to-black/50 text-white relative overflow-hidden"
-      onMouseMove={handleMouseMove}
-    >
-      {/* Cursor particles */}
-      {cursorParticles.map((particle) => (
-        <motion.div
-          key={particle.id}
-          className="fixed pointer-events-none z-50 mix-blend-plus-lighter"
-          initial={{ 
-            x: particle.x, 
-            y: particle.y,
-            rotate: particle.rotation,
-            scale: particle.scale,
-            opacity: particle.opacity 
-          }}
-          animate={{ 
-            x: particle.x + (Math.random() * 100 - 50),
-            y: particle.y + (Math.random() * 100 - 50),
-            rotate: particle.rotation + 180,
-            scale: 0,
-            opacity: 0
-          }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        >
-          <div className="w-3 h-3 bg-white/30 backdrop-blur-sm" style={{
-            clipPath: Math.random() > 0.5 
-              ? 'polygon(50% 0%, 0% 100%, 100% 100%)'  // triangle
-              : Math.random() > 0.5 
-                ? 'circle(50% at 50% 50%)'  // circle
-                : 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'  // square
-          }} />
-        </motion.div>
-      ))}
-
+    <div className="min-h-screen bg-gradient-to-br from-gray-900/50 to-black/50 text-white relative overflow-hidden">
+      <RulerCursor />
+      <PendantLamp />
       <Background isInteracting={isInteracting} scrollProgress={scrollYProgress.get()} />
       
       {/* Hero Section */}
@@ -175,7 +115,7 @@ function App() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-4xl mx-auto space-y-8"
+          className="text-center max-w-4xl mx-auto space-y-8 relative pb-48"
         >
           <img
             src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
@@ -201,21 +141,26 @@ function App() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToProjects}
-            className="px-8 py-4 bg-white/10 rounded-full hover:bg-white/20 transition-colors backdrop-blur-sm mt-12"
+            className="px-8 py-4 bg-white/10 rounded-full hover:bg-white/20 transition-colors backdrop-blur-sm mt-12 mb-24"
           >
             {content[language].viewProjects}
           </motion.button>
 
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-gray-300">
-            <a href="mailto:buse.arıca@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-gray-300 pb-8">
+            <a href="mailto:buse.arıca@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors backdrop-blur-sm px-4 py-2 rounded-lg">
               <Mail className="w-5 h-5" />
               buse.arıca@gmail.com
             </a>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-lg">
               <MapPin className="w-5 h-5" />
               TR Istanbul
             </div>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+            <a 
+              href="https://linkedin.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-white transition-colors backdrop-blur-sm p-2 rounded-lg"
+            >
               <Linkedin className="w-6 h-6" />
             </a>
           </div>
