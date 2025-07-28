@@ -1,72 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Mail, MapPin, Linkedin, Palette, Camera, Cuboid as Cube, Languages } from 'lucide-react';
+import { Mail, MapPin, Linkedin, Languages } from 'lucide-react';
 import { ModelViewer } from './components/ModelViewer';
 import { ProjectCard } from './components/ProjectCard';
 import { Background } from './components/Background';
 import { RulerCursor } from './components/DesignerCursor';
 import { PendantLamp } from './components/PendantLamp';
+import { PDFViewer } from './components/PDFViewer';
+import { MemoryIndicator } from './components/MemoryIndicator';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useAdmin, iconOptions } from './contexts/AdminContext';
+import { ModelProvider } from './contexts/ModelContext';
 
-const content = {
-  en: {
-    about: "I'm currently pursuing my Bachelor's degree in Interior Design at Beykent University. With a passion for creating harmonious and functional spaces, I combine innovative design principles with practical solutions. My expertise in various design software allows me to bring creative visions to life, while my attention to detail ensures each project meets the highest standards of aesthetic and functionality.",
-    title: "Interior Designer",
-    aboutTitle: "About Me",
-    skills: "Technical Skills",
-    projects: "Featured Projects",
-    viewProjects: "View My Projects"
-  },
-  tr: {
-    about: "Beykent Üniversitesi'nde İç Mimarlık lisans eğitimimi sürdürüyorum. Uyumlu ve işlevsel mekanlar yaratma tutkusuyla, yenilikçi tasarım prensiplerini pratik çözümlerle birleştiriyorum. Çeşitli tasarım yazılımlarındaki uzmanlığım, yaratıcı vizyonları hayata geçirmemi sağlarken, detaylara olan dikkatim her projenin estetik ve işlevsellik açısından en yüksek standartlara ulaşmasını sağlıyor.",
-    title: "İç Mimar",
-    aboutTitle: "Hakkımda",
-    skills: "Teknik Beceriler",
-    projects: "Öne Çıkan Projeler",
-    viewProjects: "Projelerimi Görüntüle"
-  }
-};
 
-const projects = [
-  {
-    id: 1,
-    title: 'Modern Minimalist Living Room',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    image: '/images/living-room-main.jpg',
-    gallery: [
-      '/images/living-room-1.png',
-      '/images/living-room-2.jpg'
-    ],
-    modelUrl: '/models/living-room.glb'
-  },
-  {
-    id: 2,
-    title: 'Contemporary Kitchen Design',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    image: '/images/kitchen-main.jpg',
-    gallery: [
-      '/images/kitchen-1.jpg',
-      '/images/kitchen-2.jpg'
-    ],
-    modelUrl: '/models/kitchen.glb'
-  },
-  {
-    id: 3,
-    title: 'Luxurious Master Bedroom',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-    image: '/images/bedroom-main.jpg',
-    gallery: [
-      '/images/bedroom-1.jpg',
-      '/images/bedroom-2.jpg'
-    ],
-    modelUrl: '/models/bedroom.glb'
-  }
-];
-
-const skills = [
-  { icon: Palette, name: 'AutoCAD' },
-  { icon: Camera, name: '3DS Max' },
-  { icon: Cube, name: 'SketchUp' }
-];
 
 interface CursorParticle {
   id: number;
@@ -78,10 +23,36 @@ interface CursorParticle {
 }
 
 function App() {
-  const [selectedProject, setSelectedProject] = useState(projects[0]);
+  const { data } = useAdmin();
+  const [selectedProject, setSelectedProject] = useState(data.projects[0]);
   const [language, setLanguage] = useState<'en' | 'tr'>('en');
   const [isInteracting, setIsInteracting] = useState(false);
+  const [pdfViewer, setPdfViewer] = useState<{isOpen: boolean, url: string, title: string}>({
+    isOpen: false,
+    url: '',
+    title: ''
+  });
   const projectsRef = useRef<HTMLDivElement>(null);
+
+  const content = data.content;
+  const projects = data.projects;
+  const skills = data.skills;
+
+  // Admin butonu için özel URL kontrolü (?admin=show parametresi)
+  const showAdminButton = new URLSearchParams(window.location.search).has('admin');
+
+  const getIconComponent = (iconName: string) => {
+    const iconOption = iconOptions.find(option => option.value === iconName);
+    return iconOption?.component;
+  };
+
+  const openPDFViewer = (url: string, title: string) => {
+    setPdfViewer({ isOpen: true, url, title });
+  };
+
+  const closePDFViewer = () => {
+    setPdfViewer({ isOpen: false, url: '', title: '' });
+  };
 
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
@@ -92,7 +63,8 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900/50 to-black/50 text-white relative overflow-hidden">
+    <ModelProvider>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900/50 to-black/50 text-white relative overflow-hidden">
       <RulerCursor />
       <PendantLamp />
       <Background isInteracting={isInteracting} scrollProgress={scrollYProgress.get()} />
@@ -102,7 +74,19 @@ function App() {
         className="min-h-screen flex flex-col items-center justify-center relative px-4"
         style={{ opacity: headerOpacity, scale: headerScale }}
       >
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 flex gap-3">
+          {showAdminButton && (
+            <a
+              href="/admin/login"
+              className="flex items-center gap-2 px-3 py-2 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-colors backdrop-blur-sm text-red-400 border border-red-500/30"
+              title="Admin Erişimi"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Admin
+            </a>
+          )}
           <button
             onClick={() => setLanguage(lang => lang === 'en' ? 'tr' : 'en')}
             className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm"
@@ -129,12 +113,15 @@ function App() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-lg mx-auto">
-            {skills.map((skill) => (
-              <div key={skill.name} className="flex items-center gap-2 text-gray-300 justify-center">
-                <skill.icon className="w-5 h-5" />
-                <span>{skill.name}</span>
-              </div>
-            ))}
+            {skills.map((skill) => {
+              const IconComponent = getIconComponent(skill.icon);
+              return (
+                <div key={skill.id} className="flex items-center gap-2 text-gray-300 justify-center">
+                  {IconComponent && <IconComponent className="w-5 h-5" />}
+                  <span>{skill.name}</span>
+                </div>
+              );
+            })}
           </div>
 
           <motion.button
@@ -149,7 +136,7 @@ function App() {
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-gray-300 pb-8">
             <a href="mailto:buse.arıca@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors backdrop-blur-sm px-4 py-2 rounded-lg">
               <Mail className="w-5 h-5" />
-              buse.arıca@gmail.com
+              bbusearcc@gmail.com
             </a>
             <div className="flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-lg">
               <MapPin className="w-5 h-5" />
@@ -193,14 +180,38 @@ function App() {
                   />
                 ))}
               </div>
+              {project.bannerUrl && (
+                <button
+                  onClick={() => openPDFViewer(project.bannerUrl!, project.title)}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600/80 hover:bg-purple-600 rounded-lg transition-colors text-sm mt-4"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  Proje Afişini Görüntüle
+                </button>
+              )}
             </div>
             <div className="backdrop-blur-lg bg-white/5 rounded-xl p-4 border border-white/10">
-              <ModelViewer modelUrl={project.modelUrl} />
+              <ModelViewer modelUrl={project.modelUrl || ''} projectId={project.id} />
             </div>
           </motion.div>
         ))}
       </div>
-    </div>
+
+      {/* PDF Viewer Modal */}
+      <PDFViewer
+        isOpen={pdfViewer.isOpen}
+        onClose={closePDFViewer}
+        pdfUrl={pdfViewer.url}
+        title={pdfViewer.title}
+      />
+
+      {/* Memory Usage Indicator */}
+      <MemoryIndicator />
+      </div>
+    </ModelProvider>
   );
 }
 
